@@ -1,0 +1,140 @@
+import java.io.*;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
+class Expense {
+    String category;
+    double amount;
+    Date date;
+    Expense(String category, double amount, Date date) {
+        this.category = category;
+        this.amount = amount;
+        this.date = date;
+}    }
+public class ExpenseTrackerWithPersistence {
+    private static final String DATA_FILE = "expenses.txt";
+    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+
+    public static void main(String[] args) {
+        Map<String, Double> expensesByCategory = loadExpensesFromFile();
+        Scanner scanner = new Scanner(System.in);
+        while (true) {
+            displayMenu();
+            System.out.print("Enter your choice: ");
+            int choice;
+            try {
+                choice = scanner.nextInt();
+                scanner.nextLine(); // Consume the newline character
+            } catch (InputMismatchException e) {
+                System.out.println("Invalid input. Please enter a number.");
+                scanner.nextLine(); // Consume the invalid input
+                continue;
+            }
+            switch (choice) {
+                case 1:
+                    addExpense(scanner, expensesByCategory);
+                    break;
+                case 2:
+                    viewExpenses(expensesByCategory);
+                    break;
+                case 3:
+                    viewExpenseSummaries(expensesByCategory);
+                    break;
+                case 4:
+                    saveExpensesToFile(expensesByCategory);
+                    System.out.println("Expenses saved to file.");
+                    break;
+                case 5:
+                    System.out.println("Exiting Expense Tracker. Goodbye!");
+                    System.exit(0);
+                default:
+                    System.out.println("Invalid choice. Please enter a valid option.");
+            } }   }
+    private static void displayMenu() {
+        System.out.println("Expense Tracker Menu:");
+        System.out.println("1. Add Expense");
+        System.out.println("2. View Expenses");
+        System.out.println("3. Expense Summaries");
+        System.out.println("4. Save Expenses to File");
+        System.out.println("5. Exit");
+    }
+    private static void addExpense(Scanner scanner, Map<String, Double> expensesByCategory) {
+        System.out.print("Enter expense category: ");
+        String category = scanner.nextLine();
+        double amount;
+        while (true) {
+            try {
+                System.out.print("Enter expense amount: ");
+                amount = scanner.nextDouble();
+                scanner.nextLine(); // Consume the newline character
+                break;
+            } catch (InputMismatchException e) {
+                System.out.println("Invalid input. Please enter a valid number.");
+                scanner.nextLine(); // Consume the invalid input
+            } }
+        Date date;
+        while (true) {
+            try {
+                System.out.print("Enter expense date (yyyy-MM-dd): ");
+                String dateStr = scanner.nextLine();
+                date = dateFormat.parse(dateStr);
+                break;
+            } catch (ParseException e) {
+                System.out.println("Invalid date format. Please use the format yyyy-MM-dd.");
+            } }
+        expensesByCategory.put(category, expensesByCategory.getOrDefault(category, 0.0) + amount);
+        System.out.println("Expense added successfully!");
+    }
+    private static void viewExpenses(Map<String, Double> expensesByCategory) {
+        if (expensesByCategory.isEmpty()) {
+            System.out.println("No expenses recorded yet.");
+            return;
+        }
+        System.out.println("Expense Details:");
+        for (Map.Entry<String, Double> entry : expensesByCategory.entrySet()) {
+            System.out.println(entry.getKey() + ": $" + entry.getValue());
+        }
+        System.out.println("Total: $" + getTotalExpenses(expensesByCategory));
+    }
+    private static void viewExpenseSummaries(Map<String, Double> expensesByCategory) {
+        if (expensesByCategory.isEmpty()) {
+            System.out.println("No expenses recorded yet.");
+            return;
+        }
+        System.out.println("Expense Summaries:");
+        for (Map.Entry<String, Double> entry : expensesByCategory.entrySet()) {
+            System.out.println(entry.getKey() + ": $" + entry.getValue());
+        }
+        System.out.println("Total: $" + getTotalExpenses(expensesByCategory));
+    }
+    private static double getTotalExpenses(Map<String, Double> expensesByCategory) {
+        return expensesByCategory.values().stream().mapToDouble(Double::doubleValue).sum();
+    }
+    private static Map<String, Double> loadExpensesFromFile() {
+        Map<String, Double> expensesByCategory = new HashMap<>();
+        try (Scanner fileScanner = new Scanner(new File(DATA_FILE))) {
+            while (fileScanner.hasNextLine()) {
+                String line = fileScanner.nextLine();
+                String[] parts = line.split(",");
+                if (parts.length == 2) {
+                    String category = parts[0];
+                    double amount = Double.parseDouble(parts[1]);
+                    expensesByCategory.put(category, amount);
+                }            }        }
+catch (FileNotFoundException e) {
+            System.out.println("No previous data found. Starting with an empty expense list.");
+        } catch (Exception e) {
+            System.out.println("Error loading expenses from file: " + e.getMessage());
+        }
+        return expensesByCategory;
+    }
+    private static void saveExpensesToFile(Map<String, Double> expensesByCategory) {
+        try (PrintWriter writer = new PrintWriter(DATA_FILE)) {
+            for (Map.Entry<String, Double> entry : expensesByCategory.entrySet()) {
+                writer.println(entry.getKey() + "," + entry.getValue());
+            }
+        } catch (FileNotFoundException e) {
+            System.out.println("Error saving expenses to file: " + e.getMessage());
+        }    } }
+
+
